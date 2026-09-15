@@ -19,7 +19,7 @@ var modelViewMatrixLoc, projectionMatrixLoc;
 
 //Model state variables
 var shoulder = 0, elbow = 0;
-
+var fingers = 30, thumb = -30;
 
 //----------------------------------------------------------------------------
 // Define Shape Data 
@@ -33,7 +33,6 @@ var lightred =		vec4(1.0, 0.5, 0.5, 1.0);
 var lightgreen =	vec4(0.5, 1.0, 0.5, 1.0);
 var lightblue =   	vec4(0.5, 0.5, 1.0, 1.0);
 var white = 	   	vec4(1.0, 1.0, 1.0, 1.0);
-
 
 //Generate Axis Data: use LINES to draw. Three axes in red, green and blue
 shapes.axes.points = 
@@ -222,7 +221,7 @@ function animate()
 function render() {
 	gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
 	
-   var armShape = shapes.wireCube;
+   var armShape = shapes.solidCube;
    var matStack = [];
 	
 	//Save view transform
@@ -236,13 +235,12 @@ function render() {
 		modelViewMatrix = mult(modelViewMatrix,translate(1.0, 0.0, 0.0));
 		//Scale and Draw Upper Arm
 		matStack.push(modelViewMatrix);
-			modelViewMatrix = mult(modelViewMatrix,scalem(2.0, 0.4, 1.0));
-			gl.uniformMatrix4fv( modelViewMatrixLoc, false, flatten(modelViewMatrix) );
-			gl.drawArrays(armShape.type, armShape.start, armShape.size);
+      modelViewMatrix = mult(modelViewMatrix,scalem(2.0, 0.4, 1.0));
+      gl.uniformMatrix4fv( modelViewMatrixLoc, false, flatten(modelViewMatrix) );
+      gl.drawArrays(armShape.type, armShape.start, armShape.size);
 		//Undo Scale
 		modelViewMatrix = matStack.pop();
 
-	
 		//Position Elbow Joint
 		modelViewMatrix = mult(modelViewMatrix, translate(1.0, 0.0, 0.0));
 		//Elbow Joint
@@ -251,18 +249,65 @@ function render() {
 		modelViewMatrix = mult(modelViewMatrix, translate(1, 0.0, 0.0));
 		//Scale and Draw Forearm
 		matStack.push(modelViewMatrix);
-			modelViewMatrix = mult(modelViewMatrix, scalem(2.0, 0.4, 1.0));
-			gl.uniformMatrix4fv( modelViewMatrixLoc, false, flatten(modelViewMatrix) );
-			gl.drawArrays(armShape.type, armShape.start, armShape.size);
+      modelViewMatrix = mult(modelViewMatrix, scalem(2.0, 0.4, 1.0));
+      gl.uniformMatrix4fv( modelViewMatrixLoc, false, flatten(modelViewMatrix) );
+      gl.drawArrays(armShape.type, armShape.start, armShape.size);
 		//Undo Scale
 		modelViewMatrix = matStack.pop();
 
+      //Position Finger Joints
+		modelViewMatrix = mult(modelViewMatrix, translate(0.95, 0.0, 0.0));
+      matStack.push(modelViewMatrix);
+		//Finger Joints
+		modelViewMatrix = mult(modelViewMatrix, rotate(fingers,vec3(0,0,1)));
+		//Position Back Finger Cube
+      matStack.push(modelViewMatrix);
+		modelViewMatrix = mult(modelViewMatrix, translate(0.3, 0.2, 0.0));
+		//Scale and Draw Back Finger
+      modelViewMatrix = mult(modelViewMatrix, scalem(0.5, 0.2, 0.3));
+      gl.uniformMatrix4fv( modelViewMatrixLoc, false, flatten(modelViewMatrix) );
+      gl.drawArrays(armShape.type, armShape.start, armShape.size);
+		//Undo Scale and Position
+		modelViewMatrix = matStack.pop();
+
+      //Position Middle Finger Cube
+      matStack.push(modelViewMatrix);
+		modelViewMatrix = mult(modelViewMatrix, translate(0.3, 0.2, 0.5));
+		//Scale and Draw Back Finger
+      modelViewMatrix = mult(modelViewMatrix, scalem(0.5, 0.2, 0.3));
+      gl.uniformMatrix4fv( modelViewMatrixLoc, false, flatten(modelViewMatrix) );
+      gl.drawArrays(armShape.type, armShape.start, armShape.size);
+		//Undo Scale and Position
+		modelViewMatrix = matStack.pop();
+
+      //Position Front Finger Cube
+      matStack.push(modelViewMatrix);
+		modelViewMatrix = mult(modelViewMatrix, translate(0.3, 0.2, 1.0));
+		//Scale and Draw Back Finger
+      modelViewMatrix = mult(modelViewMatrix, scalem(0.5, 0.2, 0.3));
+      gl.uniformMatrix4fv( modelViewMatrixLoc, false, flatten(modelViewMatrix) );
+      gl.drawArrays(armShape.type, armShape.start, armShape.size);
+		//Undo Scale and Position
+		modelViewMatrix = matStack.pop();
+
+      //Undo Finger Rotation
+      modelViewMatrix = matStack.pop();
+
+      //Thumb Joints
+		modelViewMatrix = mult(modelViewMatrix, rotate(thumb,vec3(0,0,1)));
+		//Position Back Finger Cube
+      matStack.push(modelViewMatrix);
+		modelViewMatrix = mult(modelViewMatrix, translate(0.45, -0.1, 0.0));
+		//Scale and Draw Back Finger
+      modelViewMatrix = mult(modelViewMatrix, scalem(0.5, 0.2, 0.3));
+      gl.uniformMatrix4fv( modelViewMatrixLoc, false, flatten(modelViewMatrix) );
+      gl.drawArrays(armShape.type, armShape.start, armShape.size);
+		//Undo Scale and Position
+		modelViewMatrix = matStack.pop();
+
     //Restore modelViewMatrix to initial state
-	modelViewMatrix = matStack.pop();
-	
+	modelViewMatrix = matStack.pop();	
 }
-
-
 
 //----------------------------------------------------------------------------
 // Keyboard Event Functions
@@ -342,5 +387,27 @@ function handleKeys(timePassed)
    {
       if (elbow > -144) elbow = (elbow - d);
       else elbow = -144;
+   }
+
+   //Finger Updates
+   if (shift && isPressed("F")) 
+   {
+      if (fingers < 50 || thumb > -50) { 
+         fingers = (fingers + d);
+         thumb = (thumb - d);
+      } else  {
+         fingers = 50;
+         thumb = -50;
+      }
+   }
+   if (!shift && isPressed("F")) 
+   {
+      if (fingers > 0 || thumb < 0) {
+         fingers = (fingers - d);
+         thumb = (thumb + d);
+      } else {
+         fingers = 0;
+         thumb = 0;
+      }
    }
 }
